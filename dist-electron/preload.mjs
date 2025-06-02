@@ -1,9 +1,14 @@
 "use strict";
 const electron = require("electron");
-electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+console.log("Preload script is loading...");
+electron.contextBridge.exposeInMainWorld("ipcRendererApi", {
+  // Renamed to avoid conflicts and imply API surface
   on(...args) {
     const [channel, listener] = args;
-    return electron.ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+    return electron.ipcRenderer.on(
+      channel,
+      (event, ...args2) => listener(event, ...args2)
+    );
   },
   off(...args) {
     const [channel, ...omit] = args;
@@ -17,6 +22,16 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
     const [channel, ...omit] = args;
     return electron.ipcRenderer.invoke(channel, ...omit);
   }
-  // You can expose other APTs you need here.
-  // ...
 });
+electron.contextBridge.exposeInMainWorld("electron", {
+  openDirectory: async () => {
+    return electron.ipcRenderer.invoke("dialog:openDirectory");
+  },
+  readDirectory: async (dirPath) => {
+    return electron.ipcRenderer.invoke("fs:readDirectory", dirPath);
+  },
+  readFile: async (filePath) => {
+    return electron.ipcRenderer.invoke("fs:readFile", filePath);
+  }
+});
+console.log("Electron API exposed in preload script.");

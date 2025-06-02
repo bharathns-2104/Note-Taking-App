@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { promises } from "fs";
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
@@ -38,6 +39,56 @@ app.on("activate", () => {
   }
 });
 app.whenReady().then(createWindow);
+ipcMain.handle("dialog:openDirectory", async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ["openDirectory"]
+  });
+  if (canceled) {
+    return null;
+  } else {
+    return filePaths[0];
+  }
+});
+ipcMain.handle(
+  "fs:readDirectory",
+  async (event, dirPath) => {
+    const markdownFiles = [];
+    try {
+      const entries = await promises.readdir(dirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        const entryPath = path.join(dirPath, entry.name);
+        if (entry.isFile() && entry.name.endsWith(".md")) {
+          markdownFiles.push(entryPath);
+        } else if (entry.isDirectory()) {
+          const subDirFiles = await promises.readdir(entryPath, {
+            withFileTypes: true
+          });
+          for (const subEntry of subDirFiles) {
+            if (subEntry.isFile() && subEntry.name.endsWith(".md")) {
+              markdownFiles.push(path.join(entryPath, subEntry.name));
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to read directory:", dirPath, error);
+      return [];
+    }
+    return markdownFiles;
+  }
+);
+ipcMain.handle(
+  "fs:readFile",
+  async (event, filePath) => {
+    try {
+      const content = await promises.readFile(filePath, "utf8");
+      return content;
+    } catch (error) {
+      console.error("Failed to read file:", filePath, error);
+      return null;
+    }
+  }
+);
 export {
   MAIN_DIST,
   RENDERER_DIST,
