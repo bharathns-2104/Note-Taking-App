@@ -35,6 +35,19 @@ electron.contextBridge.exposeInMainWorld("electron", {
   },
   writeFile: async (filePath, content) => {
     return electron.ipcRenderer.invoke("fs:writeFile", filePath, content);
+  },
+  deleteFile: async (filePath) => {
+    console.log("[Preload] Invokin fs:deleteFile for:", filePath);
+    return electron.ipcRenderer.invoke("fs:deleteFile", filePath);
+  },
+  renameFile: async (oldPath, newPath) => {
+    console.log(
+      "[Preload] Invoking fs:renameFile from:",
+      oldPath,
+      "to:",
+      newPath
+    );
+    return electron.ipcRenderer.invoke("fs:renameFile", oldPath, newPath);
   }
 });
 console.log("Electron API exposed in preload script.");

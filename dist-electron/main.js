@@ -101,6 +101,95 @@ ipcMain.handle(
     }
   }
 );
+ipcMain.handle(
+  "fs:deleteFile",
+  async (event, filePath) => {
+    console.log("[Main Process] Attempting to delete file:", filePath);
+    try {
+      try {
+        await promises.access(filePath);
+        console.log("[Main Process] File exists at:", filePath);
+      } catch (checkError) {
+        if (checkError.code === "ENOENT") {
+          console.warn(
+            "[Main Process] File not found when trying to delete:",
+            filePath
+          );
+          return true;
+        }
+        console.error(
+          "[Main Process] Failed to access file before deletion:",
+          filePath,
+          checkError
+        );
+        return false;
+      }
+      await promises.unlink(filePath);
+      console.log("[Main Process] File deleted successfully:", filePath);
+      return true;
+    } catch (error) {
+      console.error(
+        "[Main Process] Failed to delete file due to an error:",
+        filePath,
+        error
+      );
+      return false;
+    }
+  }
+);
+ipcMain.handle(
+  "fs:renameFile",
+  async (event, oldPath, newPath) => {
+    console.log(
+      "[Main Process] Attempting to rename file from:",
+      oldPath,
+      "to:",
+      newPath
+    );
+    try {
+      try {
+        await promises.access(oldPath);
+      } catch (checkError) {
+        console.error(
+          "[Main Process] Old file does not exist or is inaccessible:",
+          oldPath,
+          checkError
+        );
+        return false;
+      }
+      try {
+        await promises.access(newPath);
+        console.error("[Main Process] New file path already exists:", newPath);
+        return false;
+      } catch (checkError) {
+        if (checkError.code !== "ENOENT") {
+          console.error(
+            "[Main Process] Unexpected error checking new file path:",
+            newPath,
+            checkError
+          );
+          return false;
+        }
+      }
+      await promises.rename(oldPath, newPath);
+      console.log(
+        "[Main Process] File renamed successfully from:",
+        oldPath,
+        "to:",
+        newPath
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        "[Main Process] Failed to rename file due to an error:",
+        oldPath,
+        newPath,
+        error
+      );
+      return false;
+    }
+  }
+);
 export {
   MAIN_DIST,
   RENDERER_DIST,

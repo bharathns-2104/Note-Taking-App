@@ -46,6 +46,19 @@ contextBridge.exposeInMainWorld("electron", {
   writeFile: async (filePath: string, content: string): Promise<boolean> => {
     return ipcRenderer.invoke("fs:writeFile", filePath, content);
   },
+  deleteFile: async (filePath: string): Promise<boolean> => {
+    console.log("[Preload] Invokin fs:deleteFile for:", filePath);
+    return ipcRenderer.invoke("fs:deleteFile", filePath);
+  },
+  renameFile: async (oldPath: string, newPath: string): Promise<boolean> => {
+    console.log(
+      "[Preload] Invoking fs:renameFile from:",
+      oldPath,
+      "to:",
+      newPath
+    );
+    return ipcRenderer.invoke("fs:renameFile", oldPath, newPath);
+  },
 });
 
 // Type definition for the exposed API
@@ -63,6 +76,9 @@ declare global {
       openDirectory: () => Promise<string | null>;
       readDirectory: (dirPath: string) => Promise<string[]>;
       readFile: (filePath: string) => Promise<string | null>;
+      writeFile: (filePath: string, content: string) => Promise<boolean>;
+      deleteFile: (filePath: string) => Promise<boolean>;
+      renameFile: (oldPath: string, newPath: string) => Promise<boolean>;
     };
   }
 }

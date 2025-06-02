@@ -136,3 +136,108 @@ ipcMain.handle(
     }
   }
 );
+
+ipcMain.handle(
+  "fs:deleteFile",
+  async (event, filePath: string): Promise<boolean> => {
+    console.log("[Main Process] Attempting to delete file:", filePath); // Main Process log
+
+    try {
+      // Optional: Check if the file exists before attempting to delete
+      // This check itself can sometimes fail due to permissions, so keep it in a try/catch
+      try {
+        await fs.access(filePath);
+        console.log("[Main Process] File exists at:", filePath);
+      } catch (checkError: any) {
+        // Explicitly type checkError as 'any' for simpler error handling
+        // If file doesn't exist, or inaccessible (e.g., deleted by other process), we treat it as already "deleted" from our perspective
+        if (checkError.code === "ENOENT") {
+          // File not found
+          console.warn(
+            "[Main Process] File not found when trying to delete:",
+            filePath
+          );
+          return true; // Already gone, so consider it a success for deletion intent
+        }
+        console.error(
+          "[Main Process] Failed to access file before deletion:",
+          filePath,
+          checkError
+        );
+        return false; // Indicate failure to delete (due to access issue)
+      }
+
+      await fs.unlink(filePath); // Perform the actual file deletion
+      console.log("[Main Process] File deleted successfully:", filePath);
+      return true; // Indicate success
+    } catch (error: any) {
+      // Catch any errors during unlink
+      console.error(
+        "[Main Process] Failed to delete file due to an error:",
+        filePath,
+        error
+      );
+      // Return false on failure, so the renderer knows it failed
+      return false;
+    }
+  }
+);
+
+ipcMain.handle(
+  "fs:renameFile",
+  async (event, oldPath: string, newPath: string): Promise<boolean> => {
+    console.log(
+      "[Main Process] Attempting to rename file from:",
+      oldPath,
+      "to:",
+      newPath
+    );
+    try {
+      // Check if the old file exists
+      try {
+        await fs.access(oldPath);
+      } catch (checkError: any) {
+        console.error(
+          "[Main Process] Old file does not exist or is inaccessible:",
+          oldPath,
+          checkError
+        );
+        return false; // Cannot rename a non-existent file
+      }
+
+      // Check if the new file path already exists (optional, but good practice to avoid overwriting)
+      try {
+        await fs.access(newPath);
+        console.error("[Main Process] New file path already exists:", newPath);
+        return false; // Prevent accidental overwrite
+      } catch (checkError: any) {
+        // If it doesn't exist (ENOENT), that's good, we can proceed.
+        if (checkError.code !== "ENOENT") {
+          console.error(
+            "[Main Process] Unexpected error checking new file path:",
+            newPath,
+            checkError
+          );
+          return false;
+        }
+      }
+
+      await fs.rename(oldPath, newPath);
+      console.log(
+        "[Main Process] File renamed successfully from:",
+        oldPath,
+        "to:",
+        newPath
+      );
+      return true; // Indicate success
+    } catch (error: any) {
+      console.error(
+        "[Main Process] Failed to rename file due to an error:",
+        oldPath,
+        newPath,
+        error
+      );
+      return false; // Indicate failure
+    }
+  }
+);
