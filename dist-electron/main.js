@@ -89,6 +89,18 @@ ipcMain.handle(
     }
   }
 );
+ipcMain.handle(
+  "fs:writeFile",
+  async (event, filePath, content) => {
+    try {
+      await promises.writeFile(filePath, content, "utf8");
+      return true;
+    } catch (error) {
+      console.error("Failed to write filr:", filePath, error);
+      return false;
+    }
+  }
+);
 export {
   MAIN_DIST,
   RENDERER_DIST,

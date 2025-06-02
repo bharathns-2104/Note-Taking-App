@@ -43,6 +43,9 @@ contextBridge.exposeInMainWorld("electron", {
   readFile: async (filePath: string): Promise<string | null> => {
     return ipcRenderer.invoke("fs:readFile", filePath);
   },
+  writeFile: async (filePath: string, content: string): Promise<boolean> => {
+    return ipcRenderer.invoke("fs:writeFile", filePath, content);
+  },
 });
 
 // Type definition for the exposed API

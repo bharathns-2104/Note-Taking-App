@@ -123,3 +123,16 @@ ipcMain.handle(
     }
   }
 );
+
+ipcMain.handle(
+  "fs:writeFile",
+  async (event, filePath: string, content: string): Promise<boolean> => {
+    try {
+      await fs.writeFile(filePath, content, "utf8");
+      return true;
+    } catch (error) {
+      console.error("Failed to write filr:", filePath, error);
+      return false;
+    }
+  }
+);

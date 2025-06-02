@@ -32,6 +32,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
   },
   readFile: async (filePath) => {
     return electron.ipcRenderer.invoke("fs:readFile", filePath);
+  },
+  writeFile: async (filePath, content) => {
+    return electron.ipcRenderer.invoke("fs:writeFile", filePath, content);
   }
 });
 console.log("Electron API exposed in preload script.");

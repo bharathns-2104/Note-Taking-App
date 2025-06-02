@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dompurify": "^3.2.6",
+    "marked": "^15.0.12",
     "path-browserify": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/marked": "^5.0.2",
     "@types/path-browserify": "^1.0.3",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
